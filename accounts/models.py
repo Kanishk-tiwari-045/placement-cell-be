@@ -24,14 +24,3 @@ class CustomUser(AbstractUser):
     def __str__(self):
         return self.email
 
-
-class CustomGoogleTokenComposite(models.Model):
-    user = models.OneToOneField(
-        CustomUser, on_delete=models.CASCADE, related_name="google_token"
-    )
-    access_token = models.CharField(max_length=255)
-    created_at = models.DateTimeField(auto_now_add=True)
-    token = models.OneToOneField(
-        Token, on_delete=models.CASCADE, related_name="google_token"
-    )
-    refresh_token = models.CharField(max_length=255, null=True, blank=True)
