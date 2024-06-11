@@ -83,15 +83,13 @@ WSGI_APPLICATION = "placement_cell_be.wsgi.application"
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql",
-        "NAME": os.environ.get('DB_NAME'),
+        "NAME": "placement_cell_test",
         "PORT": 5432,
-        "USER": os.environ.get('DB_USER'),
-        "PASSWORD": os.environ.get('DB_PASSWORD'),
+        "USER": "postgres",
+        "HOST": "localhost",
+        "PASSWORD": "[kk9929891469]"
     }
 }
-
-
-
 
 # Password validation
 # https://docs.djangoproject.com/en/5.0/ref/settings/#auth-password-validators
