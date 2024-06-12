@@ -41,6 +41,8 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "accounts",
+    "profiles",
+    "generation",
     "rest_framework",
     "applicant",
 ]
@@ -60,8 +62,7 @@ ROOT_URLCONF = "placement_cell_be.urls"
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        # "DIRS": [BASE_DIR / "templates"],
-        "DIRS": [],
+        'DIRS': [os.path.join(BASE_DIR, 'templates')],
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [
@@ -83,7 +84,7 @@ WSGI_APPLICATION = "placement_cell_be.wsgi.application"
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql",
-        "NAME": "placement_cell_test",
+        "NAME": "placement_cell_db",
         "PORT": 5432,
         "USER": "postgres",
         "HOST": "localhost",
@@ -121,7 +122,12 @@ USE_I18N = True
 
 USE_TZ = True
 
+LOGIN_REDIRECT_URL = '/accounts/login/'  # Or any other URL you prefer
 
+LINKEDIN_CLIENT_ID='86j12cvy9x03mw'
+LINKEDIN_CLIENT_SECRET='WPL_AP0.JwTuXoyvsW68L8ep.Mzc5ODY4NTQzNQ=='
+LINKEDIN_REDIRECT_URI = 'http://localhost:8000/linkedin/callback/'
+SOCIAL_AUTH_LINKEDIN_SCOPE = ['openid', 'profile', 'email', 'w_member_social']
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.0/howto/static-files/
 
