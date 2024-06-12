@@ -2,8 +2,11 @@ from django.shortcuts import render, redirect
 from django.conf import settings
 from django.http import HttpResponse
 from .models import Profile  # Assuming Profile is your model for LinkedIn profiles
-from django.contrib.auth.models import User
+from django.conf import settings
+from django.contrib.auth import get_user_model
 import requests
+
+User = get_user_model()
 
 def linkedin_login(request):
     linkedin_auth_url = (
@@ -14,6 +17,7 @@ def linkedin_login(request):
         "&scope=openid%20profile%20email"
     )
     return redirect(linkedin_auth_url)
+
 
 def linkedin_callback(request):
     print("linkedin_callback view called")
@@ -57,7 +61,7 @@ def linkedin_callback(request):
         return HttpResponse("Email address is missing from LinkedIn profile.", status=400)
 
     try:
-        linkedin_profile = Profile.objects.get(user_email=email)
+        linkedin_profile = Profile.objects.get(email=email)
         linkedin_profile.first_name = first_name
         linkedin_profile.last_name = last_name
         linkedin_profile.save()
