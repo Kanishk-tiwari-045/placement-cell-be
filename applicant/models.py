@@ -12,6 +12,5 @@ class UserProfile(models.Model):
     tech_stack=models.CharField(max_length=250, null=True, blank=True)
     project=models.CharField(max_length=250, null=True, blank=True)
     
-
     def __str__(self):
         return self.user.username

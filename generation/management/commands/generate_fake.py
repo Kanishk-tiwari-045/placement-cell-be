@@ -1,10 +1,8 @@
 from django.core.management.base import BaseCommand
 from faker import Faker
-from django.contrib.auth import get_user_model
+from accounts.models import CustomUser
 from generation.models import Details
 import random
-
-User = get_user_model()
 
 class Command(BaseCommand):
     help = 'Generate fake data for testing'
@@ -14,32 +12,39 @@ class Command(BaseCommand):
 
     def generate_phone_number(self, fake):
         """
-        Generate a more genuine phone number with international dialing codes.
+        Generate a unique phone number that doesn't exist in the database.
         """
-        international_dialing_codes = ['+1', '+91', '+44', '+49', '+61', '+81', '+86', '+31', '+64', '+65']
-        dialing_code = fake.random_element(elements=international_dialing_codes)
-        if dialing_code == '+1':
-            phone_number = fake.numerify(text='##########')  # US phone number
-        elif dialing_code == '+91':
-            phone_number = fake.numerify(text='##########')  # India phone number
-        elif dialing_code == '+44':
-            phone_number = fake.numerify(text='##########')  # UK phone number
-        elif dialing_code == '+49':
-            phone_number = fake.numerify(text='###########')  # Germany phone number
-        elif dialing_code == '+61':
-            phone_number = fake.numerify(text='#########')  # Australia phone number
-        elif dialing_code == '+81':
-            phone_number = fake.numerify(text='##########')  # Japan phone number
-        elif dialing_code == '+86':
-            phone_number = fake.numerify(text='############')  # China phone number
-        elif dialing_code == '+31':
-            phone_number = fake.numerify(text='#########')  # Netherlands phone number
-        elif dialing_code == '+64':
-            phone_number = fake.numerify(text='########')  # New Zealand phone number
-        elif dialing_code == '+65':
-            phone_number = fake.numerify(text='########')  # Singapore phone number
-        else:
-            phone_number = fake.numerify(text='##########')  # Default to 10 digits
+        while True:
+            international_dialing_codes = ['+1', '+91', '+44', '+49', '+61', '+81', '+86', '+31', '+64', '+65']
+            dialing_code = fake.random_element(elements=international_dialing_codes)
+            
+            if dialing_code == '+1':
+                phone_number = fake.numerify(text='##########')  # US phone number
+            elif dialing_code == '+91':
+                phone_number = fake.numerify(text='##########')  # India phone number
+            elif dialing_code == '+44':
+                phone_number = fake.numerify(text='##########')  # UK phone number
+            elif dialing_code == '+49':
+                phone_number = fake.numerify(text='###########')  # Germany phone number
+            elif dialing_code == '+61':
+                phone_number = fake.numerify(text='#########')  # Australia phone number
+            elif dialing_code == '+81':
+                phone_number = fake.numerify(text='##########')  # Japan phone number
+            elif dialing_code == '+86':
+                phone_number = fake.numerify(text='############')  # China phone number
+            elif dialing_code == '+31':
+                phone_number = fake.numerify(text='#########')  # Netherlands phone number
+            elif dialing_code == '+64':
+                phone_number = fake.numerify(text='########')  # New Zealand phone number
+            elif dialing_code == '+65':
+                phone_number = fake.numerify(text='########')  # Singapore phone number
+            else:
+                phone_number = fake.numerify(text='##########')  # Default to 10 digits
+            
+            # Check if the phone number already exists in the Details model
+            if not Details.objects.filter(phone_number=phone_number).exists():
+                break
+        
         return dialing_code + phone_number
 
     def handle(self, *args, **kwargs):
@@ -75,16 +80,20 @@ class Command(BaseCommand):
             username = fake.user_name()
             email = fake.email(domain=fake.random_element(elements=email_domains))
             password = 'password'
-            user = User.objects.create(username=username,
-                                       email=email,
-                                       password=password)
+            phone_number = self.generate_phone_number(fake)
+            
+            user = CustomUser.objects.create_user(username=username,
+                                                  email=email,
+                                                  password=password,
+                                                  phone_number=phone_number,
+                                                  name=f'{first_name} {last_name}')
             profile = Details.objects.create(user=user,
                                              first_name=first_name,
                                              last_name=last_name,
                                              email=email,
                                              picture=fake.image_url(),
                                              bio=fake.sentence(nb_words=10),
-                                             phone_number=self.generate_phone_number(fake),
+                                             phone_number=phone_number,
                                              address=fake.address(),
                                              title=fake.job(),
                                              techstack=fake.random_element(elements=tech_stacks),
@@ -93,4 +102,4 @@ class Command(BaseCommand):
                                              field_of_study=fake.random_element(elements=fields_of_study),
                                              school=fake.random_element(elements=school_names))
             
-        return 'successfully generated'
+        return 'Successfully generated fake data'

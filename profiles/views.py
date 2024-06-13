@@ -2,11 +2,12 @@ from django.shortcuts import render, redirect
 from django.conf import settings
 from django.http import HttpResponse
 from .models import Profile  # Assuming Profile is your model for LinkedIn profiles
-from django.conf import settings
-from django.contrib.auth import get_user_model
+from django.contrib.auth import get_user_model, logout as auth_logout
 import requests
+from faker import Faker
 
 User = get_user_model()
+fake = Faker()
 
 def linkedin_login(request):
     linkedin_auth_url = (
@@ -17,7 +18,6 @@ def linkedin_login(request):
         "&scope=openid%20profile%20email"
     )
     return redirect(linkedin_auth_url)
-
 
 def linkedin_callback(request):
     print("linkedin_callback view called")
@@ -47,6 +47,7 @@ def linkedin_callback(request):
     }
     profile_response = requests.get(profile_url, headers=headers)
     profile_data = profile_response.json()
+    
     # Printing claims to the console
     claims_supported = ["sub", "name", "given_name", "family_name", "picture", "email", "email_verified", "locale"]
     print("Claims Supported:")
@@ -60,13 +61,24 @@ def linkedin_callback(request):
     if not email:
         return HttpResponse("Email address is missing from LinkedIn profile.", status=400)
 
+    username = f"{first_name[0].lower()}{last_name.lower()}"
+    
+    # Ensure the phone number is unique
+    phone_number = fake.phone_number()
+    while User.objects.filter(phone_number=phone_number).exists():
+        phone_number = fake.phone_number()
+
     try:
         linkedin_profile = Profile.objects.get(email=email)
         linkedin_profile.first_name = first_name
         linkedin_profile.last_name = last_name
         linkedin_profile.save()
     except Profile.DoesNotExist:
-        user, created = User.objects.get_or_create(username=email, email=email)
+        user, created = User.objects.get_or_create(username=username, email=email, defaults={
+            'first_name': first_name,
+            'last_name': last_name,
+            'phone_number': phone_number
+        })
         if created:
             linkedin_profile = Profile.objects.create(
                 user=user,
@@ -77,6 +89,8 @@ def linkedin_callback(request):
             print("LinkedIn Profile saved successfully:", linkedin_profile.user.username)
         else:
             print("User already exists.")
+
+    auth_logout(request)
     return HttpResponse("LinkedIn Profile saved successfully.")
 
 def signup_view(request):
