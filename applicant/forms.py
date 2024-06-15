@@ -5,9 +5,3 @@ class UserRegisterForm(forms.ModelForm):
     class Meta:
         model = UserProfile
         fields = ['user', 'about','education', 'certification', 'experience', 'tech_stack', 'project']
-
-
-class UserProfileForm(forms.ModelForm):
-    class Meta:
-        model = UserProfile
-        fields = ['user', 'about', 'education', 'certification', 'experience', 'tech_stack', 'project']

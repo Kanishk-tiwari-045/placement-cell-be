@@ -51,6 +51,7 @@ INSTALLED_APPS = [
     "accounts",
     "profiles",
     "generation",
+    'organization',
     "rest_framework",
     "applicant",
 ]
@@ -92,7 +93,7 @@ WSGI_APPLICATION = "placement_cell_be.wsgi.application"
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql",
-        "NAME": "placement_cell_official",
+        "NAME": "placement_cell_self",
         "PORT": 5432,
         "USER": "postgres",
         "HOST": "localhost",
@@ -145,3 +146,12 @@ STATIC_URL = "static/"
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+# settings.py (development)
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'  # Example for Gmail
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = 'kanishktiwari11a@gmail.com'
+EMAIL_HOST_PASSWORD = 'azrd sadu cquz yvuk'
+
