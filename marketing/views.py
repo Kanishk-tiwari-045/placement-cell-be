@@ -11,6 +11,9 @@ from rest_framework import status, generics
 from rest_framework.response import Response
 from .models import Organisation, Job
 from .serializers import OrganisationCreateSerializer, OrganisationGetSerializer, JobCreateSerializer, JobGetSerializer
+from utils.mail import organization_registration_email, job_posted_email
+
+# Create your views here.
 
 class OrganisationView(generics.CreateAPIView):
     queryset = Organisation.objects.all()
@@ -92,6 +95,7 @@ class VerifyOTPView(APIView):
             return Response({'message': 'Missing required parameters'}, status=status.HTTP_400_BAD_REQUEST)
         try:
             organization = Organisation.objects.get(id=organization_id, email=email)
+            organization_registration_email(organization.name, organization.created_by.email)
             if otp == stored_otp:
                 # Check if OTP is within valid time (10 minutes)
                 if otp_created_at:
@@ -108,54 +112,70 @@ class VerifyOTPView(APIView):
                     return Response({'message': 'OTP creation time not found'}, status=status.HTTP_400_BAD_REQUEST)
             else:
                 return Response({'message': 'Invalid OTP'}, status=status.HTTP_400_BAD_REQUEST)
+            
         except Organisation.DoesNotExist:
-            return Response({'message': 'Organization not found'}, status=status.HTTP_404_NOT_FOUND)
+            return Response({"message": "Invalid data, Organization not found"}, status=status.HTTP_400_BAD_REQUEST)
 
 class JobView(APIView):
     serializer_class = JobCreateSerializer
-    queryset = Job.objects.all()
+    querysets = Job.objects.all()
+
     def post(self, request):
         data = request.data
         serial_data = self.serializer_class(data=data)
         if serial_data.is_valid():
-            serial_data.save()
+            instance=serial_data.save()
+            #  job post mail
+            instance_data = JobGetSerializer(instance).data
+            if instance.company and instance.company.created_by:
+                job_posted_email(instance_data, instance.company.created_by.email)
             return Response({"data": serial_data.data}, status=status.HTTP_201_CREATED)
-    
+
         return Response({"message": "invalid data"}, status=status.HTTP_400_BAD_REQUEST)
-    
+
     def get(self, request):
-        data_count = self.queryset.count()
+        data_count = self.querysets.count()
         params = request.query_params.dict()
-    
+
         if params.get("id"):
-            querysets = self.queryset.filter(id=params.get("id"))
-            jobs = JobGetSerializer(querysets, many=True).data
-            return Response(
-                {"data": jobs, "total_count": data_count}, status=status.HTTP_200_OK
-            )
-    
-        if params.get("title"):
-            querysets = self.queryset.filter(title__icontains(params.get("title")))
-            jobs = JobGetSerializer(querysets, many=True).data
-            return Response(
-                {"data": jobs, "total_count": data_count}, status=status.HTTP_200_OK
-            )
-    
-        if params.get("organisation"):
-            querysets = self.queryset.filter(company=params.get("organisation"))
-            jobs = JobGetSerializer(querysets, many=True).data
-            return Response(
-                {"data": jobs, "total_count": data_count}, status=status.HTTP_200_OK
-            )
-    
-        if params.get("location"):
-            querysets = self.queryset.filter(work_location=params.get("location"))
+            querysets = self.querysets.filter(id=params.get("id"))
             jobs = JobGetSerializer(querysets, many=True).data
             return Response(
                 {"data": jobs, "total_count": data_count}, status=status.HTTP_200_OK
             )
 
-        jobs = JobGetSerializer(self.queryset, many=True).data
+        if params.get("title"):
+            querysets = self.querysets.filter(title__icontains=params.get("title"))
+            jobs = JobGetSerializer(querysets, many=True).data
+            return Response(
+                {"data": jobs, "total_count": data_count}, status=status.HTTP_200_OK
+            )
+        
+        ############# Changed this for company ############### 
+        if params.get("company"):
+            querysets = self.querysets.filter(company=params.get("company"))
+            jobs = JobGetSerializer(querysets, many=True).data
+            return Response(
+                {"data": jobs, "total_count": data_count}, status=status.HTTP_200_OK
+            )
+
+        ############# Changed this for work location ############### 
+        if params.get("work_location"):
+            querysets = self.querysets.filter(work_location=params.get("work_location"))
+            jobs = JobGetSerializer(querysets, many=True).data
+            return Response(
+                {"data": jobs, "total_count": data_count}, status=status.HTTP_200_OK
+            )
+
+        if 'location' in params:
+            querysets = self.querysets.filter(company_location_icontains=params['location'])
+            jobs = JobGetSerializer(querysets, many=True).data
+            return Response(
+                {"data": jobs, "total_count": data_count}, status=status.HTTP_200_OK
+            )
+
+
+        jobs = JobGetSerializer(self.querysets, many=True).data
         return Response(
             {"data": jobs, "total_count": data_count}, status=status.HTTP_200_OK
         )
